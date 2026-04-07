@@ -160,6 +160,9 @@ Verifica:
   - `offline` para servidores sin premium
   - `microsoft` para premium
 
+### ShowCase
+https://youtu.be/t7e8yLeb6_4
+
 ## Licencia
 
 MIT
