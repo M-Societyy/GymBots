@@ -1,0 +1,51 @@
+{
+  "sistema": {
+    "prefijoComandos": "!",
+    "nivelLog": "info",
+    "panel": {
+      "habilitado": true,
+      "intervaloMs": 500
+    },
+    "reconexion": {
+      "habilitada": true,
+      "intentosMaximos": 0,
+      "esperaBaseMs": 2500,
+      "esperaMaxMs": 30000
+    },
+    "plugins": {
+      "carpeta": "./src/plugins",
+      "habilitados": []
+    }
+  },
+  "servidor": {
+    "host": "localhost",
+    "port": 25565,
+    "version": false,
+    "auth": "offline"
+  },
+  "bots": [
+    {
+      "id": "bot-1",
+      "username": "GymBot_1",
+      "password": null,
+      "permisos": {
+        "admin": ["c1q_"],
+        "moderador": [],
+        "usuario": ["*"]
+      },
+      "modulos": {
+        "chat": true,
+        "eventos": true,
+        "estado": true,
+        "bloques": true,
+        "entidades": true,
+        "inventario": true,
+        "movimiento": true,
+        "acciones": true
+      },
+      "pathfinder": {
+        "habilitado": true
+      }
+    }
+  ]
+}

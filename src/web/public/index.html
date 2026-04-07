@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GymBots Web Control</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background: #0b0f17; color: #e7eaf0; }
+    header { padding: 16px 20px; border-bottom: 1px solid #1f2a3a; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    main { padding: 18px 20px; display: grid; grid-template-columns: 340px 1fr; gap: 14px; }
+    .card { background: #0f1726; border: 1px solid #1f2a3a; border-radius: 10px; overflow: hidden; }
+    .card h2 { margin: 0; padding: 12px 14px; font-size: 13px; border-bottom: 1px solid #1f2a3a; color: #cbd5e1; }
+    .card .content { padding: 12px 14px; }
+    label { display: block; font-size: 12px; color: #9aa6b2; margin-bottom: 6px; }
+    input, select, button, textarea { width: 100%; box-sizing: border-box; border-radius: 8px; border: 1px solid #243248; background: #0b1220; color: #e7eaf0; padding: 10px 10px; }
+    textarea { min-height: 90px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    button { cursor: pointer; background: #1d4ed8; border-color: #1d4ed8; font-weight: 600; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .muted { color: #9aa6b2; font-size: 12px; }
+    .status { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; }
+    .dot { width: 10px; height: 10px; border-radius: 999px; background: #64748b; }
+    .dot.ok { background: #22c55e; }
+    .dot.bad { background: #ef4444; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 10px 10px; border-bottom: 1px solid #1f2a3a; text-align: left; vertical-align: top; }
+    th { color: #9aa6b2; font-weight: 600; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GymBots - Control Web</h1>
+    <div class="status">
+      <span id="dot" class="dot"></span>
+      <span id="wsStatus">Desconectado</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Enviar comando</h2>
+      <div class="content">
+        <div class="row">
+          <div>
+            <label>Bot</label>
+            <select id="botId"></select>
+          </div>
+          <div>
+            <label>Token (si aplica)</label>
+            <input id="token" placeholder="(opcional)" />
+          </div>
+        </div>
+
+        <div style="height: 10px"></div>
+
+        <label>Comando</label>
+        <input id="cmd" placeholder="Ej: estado  |  decir hola  |  ir 100 64 200" />
+        <div style="height: 10px"></div>
+        <button id="send">Enviar</button>
+        <div style="height: 10px"></div>
+        <div class="muted">Tip: no necesitas poner <code>!</code>. El servidor lo agrega con el prefijo configurado.</div>
+
+        <div style="height: 14px"></div>
+
+        <label>Respuesta</label>
+        <textarea id="log" readonly></textarea>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Estado en vivo</h2>
+      <div class="content" style="padding: 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Username</th>
+              <th>Conexión</th>
+              <th>Servidor</th>
+              <th>Dim</th>
+              <th>Pos</th>
+              <th>HP/Food</th>
+              <th>Plugins</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/config.js"></script>
+  <script>
+    const botSelect = document.getElementById('botId')
+    const tokenInput = document.getElementById('token')
+    const cmdInput = document.getElementById('cmd')
+    const sendBtn = document.getElementById('send')
+    const log = document.getElementById('log')
+    const rows = document.getElementById('rows')
+    const wsStatus = document.getElementById('wsStatus')
+    const dot = document.getElementById('dot')
+
+    tokenInput.value = (window.__GYMBOTS__ && window.__GYMBOTS__.token) ? window.__GYMBOTS__.token : ''
+
+    function setWsUI(ok, text) {
+      wsStatus.textContent = text
+      dot.classList.remove('ok', 'bad')
+      dot.classList.add(ok ? 'ok' : 'bad')
+    }
+
+    function appendLog(line) {
+      log.value = (log.value ? (log.value + "\n") : "") + line
+      log.scrollTop = log.scrollHeight
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+    }
+
+    function renderState(state) {
+      const bots = (state && state.bots) ? state.bots : []
+
+      const current = botSelect.value
+      botSelect.innerHTML = ''
+      const optAll = document.createElement('option')
+      optAll.value = 'all'
+      optAll.textContent = 'all'
+      botSelect.appendChild(optAll)
+
+      for (const b of bots) {
+        const opt = document.createElement('option')
+        opt.value = b.id
+        opt.textContent = b.id
+        botSelect.appendChild(opt)
+      }
+      if (current) botSelect.value = current
+
+      rows.innerHTML = bots.map(b => {
+        const st = b.estado || {}
+        const conn = b.conexion || {}
+        const plugins = (b.plugins || []).join(', ')
+        return `<tr>
+          <td><code>${escapeHtml(b.id)}</code></td>
+          <td>${escapeHtml(b.username || '')}</td>
+          <td>${escapeHtml(conn.estado || '')}</td>
+          <td>${escapeHtml(conn.servidor || '')}</td>
+          <td>${escapeHtml(st.dimension || '')}</td>
+          <td>${escapeHtml(st.posicion || '')}</td>
+          <td>${escapeHtml(String(st.salud ?? ''))}/${escapeHtml(String(st.comida ?? ''))}</td>
+          <td>${escapeHtml(plugins)}</td>
+        </tr>`
+      }).join('')
+    }
+
+    function connect() {
+      const t = tokenInput.value.trim()
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws'
+      const url = new URL(`${proto}://${location.host}`)
+      if (t) url.searchParams.set('token', t)
+
+      const ws = new WebSocket(url)
+      sendBtn.disabled = true
+
+      ws.onopen = () => {
+        setWsUI(true, 'Conectado')
+        sendBtn.disabled = false
+        appendLog(`[ws] conectado a ${url}`)
+      }
+      ws.onclose = () => {
+        setWsUI(false, 'Desconectado')
+        sendBtn.disabled = true
+        appendLog('[ws] desconectado, reintentando...')
+        setTimeout(connect, 1000)
+      }
+      ws.onerror = () => {}
+
+      ws.onmessage = (ev) => {
+        let msg
+        try { msg = JSON.parse(ev.data) } catch { return }
+        if (msg.type === 'state') {
+          renderState(msg.data)
+        }
+        if (msg.type === 'ack') {
+          if (msg.ok) appendLog('[ok] comando enviado')
+          else appendLog('[error] ' + (msg.error || 'fallo'))
+        }
+      }
+
+      sendBtn.onclick = () => {
+        const botId = botSelect.value
+        const raw = cmdInput.value.trim()
+        if (!raw) return
+        ws.send(JSON.stringify({ type: 'cmd', botId, raw }))
+      }
+    }
+
+    setWsUI(false, 'Desconectado')
+    connect()
+  </script>
+</body>
+</html>
