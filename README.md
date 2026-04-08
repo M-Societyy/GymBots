@@ -1,12 +1,53 @@
+<div align="center">
+
 # GymBots
 
+![GitHub license](https://img.shields.io/github/license/M-Societyy/GymBots?style=for-the-badge)
+![GitHub version](https://img.shields.io/github/package-json/v/M-Societyy/GymBots?style=for-the-badge)
+![GitHub stars](https://img.shields.io/github/stars/M-Societyy/GymBots?style=for-the-badge&color=yellow)
+![GitHub forks](https://img.shields.io/github/forks/M-Societyy/GymBots?style=for-the-badge&color=blue)
+![GitHub issues](https://img.shields.io/github/issues/M-Societyy/GymBots?style=for-the-badge&color=red)
+
 Sistema avanzado y modular de bots para Minecraft basado en Mineflayer, controlado desde terminal con interfaz web moderna.
+
+</div>
 
 **Versión: 1.0.2**
 
 Autoría: c1q_ | M-Society | Gym Client Team
 
 **GitHub:** https://github.com/M-Societyy/GymBots
+
+---
+
+## Tecnologías
+
+<div align="center">
+
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![HTML](https://img.shields.io/badge/HTML-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS](https://img.shields.io/badge/CSS-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![Batch](https://img.shields.io/badge/Batch-4D4D4D?style=for-the-badge&logo=windows&logoColor=white)
+![Shell](https://img.shields.io/badge/Shell-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=websocket&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
+![Mineflayer](https://img.shields.io/badge/Mineflayer-62B477?style=for-the-badge&logo=minecraft&logoColor=white)
+
+</div>
+
+---
+
+## Build Status & Dependencies
+
+<div align="center">
+
+![Node.js Version](https://img.shields.io/badge/node-%3E%3D22-brightgreen?style=for-the-badge&logo=node.js)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=for-the-badge)
+![Dependencies](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen?style=for-the-badge)
+![Size](https://img.shields.io/github/repo-size/M-Societyy/GymBots?style=for-the-badge&color=orange)
+
+</div>
 
 ---
 
