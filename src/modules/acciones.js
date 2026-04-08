@@ -91,18 +91,23 @@ function instalarAcciones ({ bot, contexto }) {
     }
   })
 
+  let _comiendo = false
+
   bot.on('health', () => {
     const auto = contexto.configBot?.acciones?.autoComer
     if (!auto) return
+    if (_comiendo) return
     if (bot.food === undefined || bot.food === null) return
     if (bot.food > (auto.umbral ?? 14)) return
 
     const comida = bot.inventory.items().find(i => i.name.includes('bread') || i.name.includes('beef') || i.name.includes('pork') || i.name.includes('potato'))
     if (!comida) return
 
+    _comiendo = true
     bot.equip(comida, 'hand')
       .then(() => bot.consume())
       .catch(() => {})
+      .finally(() => { _comiendo = false })
   })
 }
 

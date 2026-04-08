@@ -80,6 +80,51 @@ function instalarEntidades ({ bot, contexto }) {
     }
   })
 
+  contexto.estado.flags.escapando = null
+
+  contexto.registrarComando({
+    nombre: 'escapar',
+    permiso: 'moderador',
+    ejecutar: async ({ usuario, args }) => {
+      const nombre = args[0]
+      if (!nombre) {
+        bot.whisper(usuario, 'Uso: escapar <jugador>')
+        return
+      }
+      const objetivo = bot.players?.[nombre]?.entity
+      if (!objetivo) {
+        bot.whisper(usuario, 'Jugador no encontrado')
+        return
+      }
+
+      contexto.estado.flags.escapando = { nombre }
+      contexto.estado.flags.acoso = null
+
+      if (bot.pathfinder) {
+        const { goals } = require('mineflayer-pathfinder')
+        const { GoalFollow, GoalInvert } = goals
+        bot.pathfinder.setGoal(new GoalInvert(new GoalFollow(objetivo, 30)), true)
+      } else {
+        bot.whisper(usuario, 'Pathfinder no disponible, escapando manualmente')
+      }
+
+      bot.whisper(usuario, `Escapando de: ${nombre}`)
+    }
+  })
+
+  contexto.registrarComando({
+    nombre: 'pararescapar',
+    permiso: 'moderador',
+    ejecutar: async ({ usuario }) => {
+      contexto.estado.flags.escapando = null
+      try {
+        if (bot.pathfinder) bot.pathfinder.setGoal(null)
+      } catch {}
+      try { bot.clearControlStates() } catch {}
+      bot.whisper(usuario, 'Escape detenido')
+    }
+  })
+
   contexto.registrarComando({
     nombre: 'noseguir',
     permiso: 'moderador',

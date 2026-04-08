@@ -54,9 +54,47 @@ function registrarComandosBase ({ bot, contexto }) {
   contexto.registrarComando({
     nombre: 'ayuda',
     permiso: null,
-    ejecutar: async ({ usuario }) => {
-      const lista = contexto.listarComandos().join(', ')
-      bot.whisper(usuario, `Comandos: ${lista}`)
+    ejecutar: async ({ usuario, args }) => {
+      const prefijo = contexto.configGlobal?.sistema?.prefijoComandos ?? '!'
+
+      const categorias = {
+        'General': ['ayuda', 'estado', 'decir', 'salir', 'pattern'],
+        'Movimiento': ['mirar', 'control', 'limpiarcontroles', 'ir'],
+        'Entidades': ['cercanos', 'seguir', 'noseguir', 'acosar', 'pararacosar', 'atacar', 'escapar', 'pararescapar'],
+        'Bloques': ['ver', 'buscarbloque', 'minar', 'colocar'],
+        'Inventario': ['items', 'equipar', 'tirar', 'cofre'],
+        'Acciones': ['comer', 'pescar', 'usar', 'dejarusar', 'craftear'],
+        'Analisis': ['scan', 'tablist', 'tps', 'serverinfo', 'testperms'],
+        'Player': ['player']
+      }
+
+      const todosRegistrados = new Set(contexto.listarComandos())
+
+      // Si piden ayuda de una categoría específica
+      const filtro = (args[0] ?? '').toLowerCase()
+      if (filtro && categorias[filtro.charAt(0).toUpperCase() + filtro.slice(1)]) {
+        const cat = filtro.charAt(0).toUpperCase() + filtro.slice(1)
+        const cmds = (categorias[cat] ?? []).filter(c => todosRegistrados.has(c))
+        bot.whisper(usuario, `--- ${cat} ---`)
+        bot.whisper(usuario, cmds.map(c => `${prefijo}${c}`).join(', '))
+        return
+      }
+
+      bot.whisper(usuario, `--- Ayuda GymBots (${todosRegistrados.size} cmds) ---`)
+      for (const [cat, cmds] of Object.entries(categorias)) {
+        const disponibles = cmds.filter(c => todosRegistrados.has(c))
+        if (disponibles.length === 0) continue
+        bot.whisper(usuario, `[${cat}] ${disponibles.map(c => `${prefijo}${c}`).join(', ')}`)
+      }
+
+      // Mostrar comandos no categorizados (plugins, etc.)
+      const categorizados = new Set(Object.values(categorias).flat())
+      const sinCategoria = [...todosRegistrados].filter(c => !categorizados.has(c))
+      if (sinCategoria.length > 0) {
+        bot.whisper(usuario, `[Otros] ${sinCategoria.map(c => `${prefijo}${c}`).join(', ')}`)
+      }
+
+      bot.whisper(usuario, `Tip: ${prefijo}ayuda <categoria> para detalle`)
     }
   })
 
@@ -101,7 +139,13 @@ function registrarComandosBase ({ bot, contexto }) {
         bot.whisper(usuario, 'Uso: pattern <nombre> <regex>' )
         return
       }
-      const re = new RegExp(texto)
+      let re
+      try {
+        re = new RegExp(texto)
+      } catch (err) {
+        bot.whisper(usuario, `Regex inválida: ${err.message}`)
+        return
+      }
       bot.addChatPattern(nombre, re, { repeat: true, parse: false })
       bot.whisper(usuario, `Patrón agregado: ${nombre}`)
     }

@@ -103,7 +103,7 @@ function instalarBloques ({ bot, contexto }) {
 
   bot.on('blockUpdate', (oldBlock, newBlock) => {
     contexto.contadorEvento()
-    if (!oldBlock) return
+    if (!oldBlock || !newBlock) return
     if (oldBlock.type === newBlock.type && oldBlock.metadata === newBlock.metadata) return
     logger?.debug('bloques', `Actualización de bloque (${contexto.id}) ${oldBlock.position}`)
   })

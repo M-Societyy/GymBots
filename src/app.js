@@ -1,4 +1,4 @@
-const { crearLogger } = require('./utils/logger')
+const { crearLogger, C } = require('./utils/logger')
 const { GestorBots } = require('./core/bot_manager')
 const { PanelConsola } = require('./core/panel')
 const { GestorPlugins } = require('./core/plugin_manager')
@@ -24,7 +24,7 @@ function crearConsolaRuntime ({ logger, gestorBots, panel, config }) {
   function logLineaBot (botId, texto) {
     const t = String(texto ?? '')
     if (!t) return
-    console.log(`[${botId}] ${t}`)
+    console.log(`${C.cyan}[${botId}]${C.reset} ${t}`)
   }
 
   function conectarLogsChatBot (entrada) {
@@ -95,38 +95,46 @@ function crearConsolaRuntime ({ logger, gestorBots, panel, config }) {
     if (!l) return
 
     if (l === ':help') {
-      console.log('Consola GymBots:')
-      console.log('  :help                 Ayuda')
-      console.log('  :bots                 Lista bots activos')
-      console.log('  :use <id>|all          Selecciona bot objetivo')
-      console.log(`  ${prefijo}<cmd> ...         Ejecuta comando del bot (mismo set que chat)`) 
-      console.log('  :quit                 Cierra la consola (los bots siguen)')
+      console.log(`\n${C.cyan}${C.bold}  Consola GymBots v1.0.2${C.reset}`)
+      console.log(`${C.gray}  ${'─'.repeat(44)}${C.reset}`)
+      console.log(`  ${C.green}:help${C.reset}                 ${C.gray}Ayuda${C.reset}`)
+      console.log(`  ${C.green}:bots${C.reset}                 ${C.gray}Lista bots activos${C.reset}`)
+      console.log(`  ${C.green}:use ${C.yellow}<id>${C.green}|all${C.reset}          ${C.gray}Selecciona bot objetivo${C.reset}`)
+      console.log(`  ${C.cyan}${prefijo}${C.yellow}<cmd> ...${C.reset}         ${C.gray}Ejecuta comando del bot${C.reset}`) 
+      console.log(`  ${C.red}:quit${C.reset}                 ${C.gray}Cierra la consola${C.reset}`)
+      console.log(`${C.gray}  ${'─'.repeat(44)}${C.reset}\n`)
       return
     }
 
     if (l === ':bots') {
       const ids = gestorBots.listarBots()
-      console.log(ids.length ? ids.join('\n') : 'Sin bots activos')
+      if (ids.length) {
+        console.log(`\n${C.cyan}${C.bold}  Bots activos (${ids.length}):${C.reset}`)
+        for (const id of ids) console.log(`  ${C.green}●${C.reset} ${C.white}${id}${C.reset}`)
+        console.log('')
+      } else {
+        console.log(`${C.yellow}Sin bots activos${C.reset}`)
+      }
       return
     }
 
     if (l.startsWith(':use ')) {
       const arg = l.slice(5).trim()
       if (!arg) {
-        console.log('Uso: :use <id>|all')
+        console.log(`${C.yellow}Uso: :use <id>|all${C.reset}`)
         return
       }
       if (arg === 'all') {
         objetivo = 'all'
-        console.log('Objetivo: ALL')
+        console.log(`${C.green}${C.bold}Objetivo: ALL${C.reset}`)
         return
       }
       if (!gestorBots.obtenerEntrada(arg)) {
-        console.log('Bot no encontrado')
+        console.log(`${C.red}Bot no encontrado${C.reset}`)
         return
       }
       objetivo = arg
-      console.log(`Objetivo: ${objetivo}`)
+      console.log(`${C.cyan}Objetivo: ${C.bold}${objetivo}${C.reset}`)
       return
     }
 
@@ -137,7 +145,7 @@ function crearConsolaRuntime ({ logger, gestorBots, panel, config }) {
     }
 
     if (!l.startsWith(prefijo)) {
-      console.log(`Comando inválido. Usa ${prefijo} o :help`) 
+      console.log(`${C.yellow}Comando inválido. Usa ${C.cyan}${prefijo}${C.yellow} o ${C.cyan}:help${C.reset}`) 
       return
     }
 

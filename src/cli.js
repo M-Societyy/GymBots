@@ -2,6 +2,7 @@
 
 const readline = require('readline/promises')
 const { stdin: input, stdout: output } = require('process')
+const { C } = require('./utils/logger')
 
 const { iniciarSistema } = require('./app')
 const { cargarConfiguracion } = require('./core/config')
@@ -19,29 +20,49 @@ function limpiarPantalla () {
   process.stdout.write('\x1b[2J\x1b[H')
 }
 
+const BANNER_CLI = [
+  `${C.cyan}${C.bold}   ██████╗ ██╗   ██╗███╗   ███╗${C.magenta}██████╗  ██████╗ ████████╗███████╗${C.reset}`,
+  `${C.cyan}${C.bold}  ██╔════╝ ╚██╗ ██╔╝████╗ ████║${C.magenta}██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝${C.reset}`,
+  `${C.cyan}${C.bold}  ██║  ███╗ ╚████╔╝ ██╔████╔██║${C.magenta}██████╔╝██║   ██║   ██║   ███████╗${C.reset}`,
+  `${C.cyan}${C.bold}  ██║   ██║  ╚██╔╝  ██║╚██╔╝██║${C.magenta}██╔══██╗██║   ██║   ██║   ╚════██║${C.reset}`,
+  `${C.cyan}${C.bold}  ╚██████╔╝   ██║   ██║ ╚═╝ ██║${C.magenta}██████╔╝╚██████╔╝   ██║   ███████║${C.reset}`,
+  `${C.cyan}${C.bold}   ╚═════╝    ╚═╝   ╚═╝     ╚═╝${C.magenta}╚═════╝  ╚═════╝    ╚═╝   ╚══════╝${C.reset}`
+]
+
 function imprimirAyuda () {
+  const cmd = (c, d) => `  ${C.cyan}${C.bold}${c.padEnd(42)}${C.reset}${C.gray}${d}${C.reset}`
+  const sec = (t) => `\n  ${C.magenta}${C.bold}── ${t} ──${C.reset}`
+
   const txt = [
     '',
-    'GymBots - CLI',
-    '',
-    'Comandos:',
-    '  gymbots                          Modo interactivo (menú)',
-    '  gymbots init                      Inicializa configuración en ~/.gymbots/config.json',
-    '  gymbots run                       Ejecuta el sistema usando ~/.gymbots/config.json',
-    '  gymbots servidor set              Asistente para host/puerto/version/auth',
-    '  gymbots web show                  Muestra configuración web',
-    '  gymbots web set                   Asistente para configurar web (host/port/token)',
-    '  gymbots web on                    Habilita control web',
-    '  gymbots web off                   Deshabilita control web',
-    '  gymbots bot add                   Asistente para crear bot',
-    '  gymbots bot list                  Lista bots configurados',
-    '  gymbots bot rm <id>               Elimina un bot por id',
-    '  gymbots bot clear [--yes]         Elimina TODOS los bots de la configuración',
-    '  gymbots permisos list <botId>     Muestra permisos del bot',
-    '  gymbots permisos grant <botId> <nivel> <usuario>   Otorga permiso (admin|moderador|usuario)',
-    '  gymbots permisos revoke <botId> <nivel> <usuario>  Revoca permiso (admin|moderador|usuario)',
-    '  gymbots config show               Muestra la configuración actual',
-    '  gymbots config path               Muestra la ruta de configuración',
+    `${C.gray}${'═'.repeat(66)}${C.reset}`,
+    ...BANNER_CLI,
+    `${C.dim}          c1q_ | M-Society | Gym Client Team${C.reset}`,
+    `${C.gray}${'═'.repeat(66)}${C.reset}`,
+    sec('General'),
+    cmd('gymbots', 'Modo interactivo (menú)'),
+    cmd('gymbots init', 'Inicializa config en ~/.gymbots/config.json'),
+    cmd('gymbots run', 'Ejecuta el sistema'),
+    sec('Servidor'),
+    cmd('gymbots servidor set', 'Asistente para host/puerto/version/auth'),
+    sec('Web'),
+    cmd('gymbots web show', 'Muestra configuración web'),
+    cmd('gymbots web set', 'Configura web (host/port/token)'),
+    cmd('gymbots web on', 'Habilita control web'),
+    cmd('gymbots web off', 'Deshabilita control web'),
+    sec('Bots'),
+    cmd('gymbots bot add', 'Asistente para crear bot'),
+    cmd('gymbots bot list', 'Lista bots configurados'),
+    cmd('gymbots bot rm <id>', 'Elimina un bot por id'),
+    cmd('gymbots bot clear [--yes]', 'Elimina TODOS los bots'),
+    cmd('gymbots bot spam', 'Agregar bots masivos'),
+    sec('Permisos'),
+    cmd('gymbots permisos list <botId>', 'Muestra permisos del bot'),
+    cmd('gymbots permisos grant <b> <n> <u>', 'Otorga permiso'),
+    cmd('gymbots permisos revoke <b> <n> <u>', 'Revoca permiso'),
+    sec('Config'),
+    cmd('gymbots config show', 'Muestra la configuración actual'),
+    cmd('gymbots config path', 'Muestra la ruta de configuración'),
     ''
   ].join('\n')
   console.log(txt)
@@ -439,30 +460,42 @@ function imprimirMenu (cfg) {
   const s = cfg?.servidor ?? {}
   const bots = cfg?.bots?.length ?? 0
   const w = cfg?.sistema?.web ?? {}
-  const linea = (t) => t
+
+  const webEstado = w.habilitado
+    ? `${C.green}${C.bold}ON${C.reset}`
+    : `${C.red}${C.bold}OFF${C.reset}`
+
+  const botsColor = bots > 0
+    ? `${C.green}${C.bold}${bots}${C.reset}`
+    : `${C.yellow}${C.bold}${bots}${C.reset}`
+
   const out = [
     '',
-    '┌──────────────────────────────────────────────────────────────┐',
-    '│ GymBots - Terminal Interactiva                               │',
-    '├──────────────────────────────────────────────────────────────┤',
-    `│ Servidor: ${String(s.host ?? '').padEnd(20, ' ')} Puerto: ${String(s.port ?? '').padEnd(5, ' ')}           │`,
-    `│ Versión:  ${String(s.version ?? '').padEnd(20, ' ')} Auth:  ${String(s.auth ?? '').padEnd(10, ' ')}          │`,
-    `│ Bots:     ${String(bots).padEnd(4, ' ')} / ${String(LIMITE_BOTS).padEnd(4, ' ')}                                           │`,
-    `│ Web:      ${String(w.habilitado ? 'ON' : 'OFF').padEnd(4, ' ')} Host: ${String(w.host ?? '').padEnd(18, ' ')} Puerto: ${String(w.port ?? '').padEnd(5, ' ')} │`,
-    '├──────────────────────────────────────────────────────────────┤',
-    '│ 1) Configurar servidor                                       │',
-    '│ 2) Configurar web                                            │',
-    '│ 3) Agregar bot                                               │',
-    '│ 4) Agregar bots masivos (spam)                               │',
-    '│ 5) Listar bots                                               │',
-    '│ 6) Permisos (grant/revoke/list)                              │',
-    '│ 7) Eliminar TODOS los bots                                  │',
-    '│ 8) Ver configuración                                         │',
-    '│ 9) Ejecutar GymBots                                          │',
-    '│ 0) Salir                                                     │',
-    '└──────────────────────────────────────────────────────────────┘',
+    `${C.gray}${'═'.repeat(66)}${C.reset}`,
+    ...BANNER_CLI,
+    `${C.dim}          c1q_ | M-Society | Gym Client Team${C.reset}`,
+    `${C.gray}${'═'.repeat(66)}${C.reset}`,
+    '',
+    `  ${C.cyan}${C.bold}┌─ Servidor ─────────────────────────────────────────┐${C.reset}`,
+    `  ${C.cyan}│${C.reset}  Host: ${C.white}${C.bold}${s.host ?? 'localhost'}${C.reset}    Puerto: ${C.white}${C.bold}${s.port ?? 25565}${C.reset}`,
+    `  ${C.cyan}│${C.reset}  Versión: ${C.white}${s.version || 'auto'}${C.reset}    Auth: ${C.white}${s.auth ?? 'offline'}${C.reset}`,
+    `  ${C.cyan}│${C.reset}  Bots: ${botsColor}${C.gray} / ${LIMITE_BOTS}${C.reset}    Web: ${webEstado}`,
+    `  ${C.cyan}${C.bold}└────────────────────────────────────────────────────┘${C.reset}`,
+    '',
+    `  ${C.gray}${'─'.repeat(52)}${C.reset}`,
+    `  ${C.green}${C.bold}1${C.reset} ${C.gray}│${C.reset} ${C.white}Configurar servidor${C.reset}`,
+    `  ${C.green}${C.bold}2${C.reset} ${C.gray}│${C.reset} ${C.white}Configurar web${C.reset}`,
+    `  ${C.cyan}${C.bold}3${C.reset} ${C.gray}│${C.reset} ${C.white}Agregar bot${C.reset}`,
+    `  ${C.cyan}${C.bold}4${C.reset} ${C.gray}│${C.reset} ${C.white}Agregar bots masivos (spam)${C.reset}`,
+    `  ${C.cyan}${C.bold}5${C.reset} ${C.gray}│${C.reset} ${C.white}Listar bots${C.reset}`,
+    `  ${C.magenta}${C.bold}6${C.reset} ${C.gray}│${C.reset} ${C.white}Permisos (grant/revoke/list)${C.reset}`,
+    `  ${C.red}${C.bold}7${C.reset} ${C.gray}│${C.reset} ${C.white}Eliminar TODOS los bots${C.reset}`,
+    `  ${C.yellow}${C.bold}8${C.reset} ${C.gray}│${C.reset} ${C.white}Ver configuración${C.reset}`,
+    `  ${C.green}${C.bold}9${C.reset} ${C.gray}│${C.reset} ${C.green}${C.bold}Ejecutar GymBots${C.reset}  ${C.cyan}▶${C.reset}`,
+    `  ${C.red}${C.bold}0${C.reset} ${C.gray}│${C.reset} ${C.dim}Salir${C.reset}`,
+    `  ${C.gray}${'─'.repeat(52)}${C.reset}`,
     ''
-  ].map(linea)
+  ]
   console.log(out.join('\n'))
 }
 
@@ -505,7 +538,7 @@ async function modoInteractivo () {
       limpiarPantalla()
       imprimirMenu(cfg)
 
-      const op = (await rl.question('Selecciona una opción: ')).trim()
+      const op = (await rl.question(`${C.cyan}${C.bold}  ▸ ${C.reset}${C.white}Selecciona una opción: ${C.reset}`)).trim()
       if (op === '0') return
       if (op === '1') await cmdServidorSet(rl)
       else if (op === '2') await cmdWebSet(rl)
@@ -516,7 +549,7 @@ async function modoInteractivo () {
       else if (op === '7') await cmdBotClear({ rl })
       else if (op === '8') await cmdConfigShow()
       else if (op === '9') {
-        console.log('Iniciando GymBots...')
+        console.log(`\n  ${C.green}${C.bold}▶ Iniciando GymBots v1.0.2...${C.reset}\n`)
         rl.close()
         await cmdRun()
         return
@@ -524,7 +557,7 @@ async function modoInteractivo () {
         console.log('Opción inválida')
       }
 
-      await rl.question('Enter para continuar...')
+      await rl.question(`${C.dim}  Enter para continuar...${C.reset}`)
     }
   } finally {
     rl.close()

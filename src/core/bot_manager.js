@@ -11,6 +11,8 @@ const { instalarEntidades } = require('../modules/entidades')
 const { instalarInventario } = require('../modules/inventario')
 const { instalarMovimiento } = require('../modules/movimiento')
 const { instalarAcciones } = require('../modules/acciones')
+const { instalarPlayer } = require('../modules/player')
+const { instalarAnalisis } = require('../modules/analisis')
 
 class GestorBots {
   constructor ({ logger, config, gestorPlugins, panel } = {}) {
@@ -173,6 +175,8 @@ class GestorBots {
     if (cfg?.modulos?.inventario !== false) instalarInventario({ bot, contexto })
     if (cfg?.modulos?.movimiento !== false) instalarMovimiento({ bot, contexto })
     if (cfg?.modulos?.acciones !== false) instalarAcciones({ bot, contexto })
+    instalarPlayer({ bot, contexto })
+    instalarAnalisis({ bot, contexto })
 
     this.gestorPlugins?.cargarParaBot({ bot, contexto })
 

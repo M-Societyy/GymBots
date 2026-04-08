@@ -19,7 +19,7 @@ function crearServidorWeb ({ logger, gestorBots, config }) {
 
   const app = express()
   const server = http.createServer(app)
-  const wss = new WebSocket.Server({ server })
+  const wss = new WebSocket.Server({ noServer: true })
 
   function autorizadoHttp (req) {
     if (!token) return true
@@ -40,6 +40,31 @@ function crearServidorWeb ({ logger, gestorBots, config }) {
       return
     }
     res.json({ ok: true, state: gestorBots.obtenerEstadoGlobal() })
+  })
+
+  app.get('/api/commands', (req, res) => {
+    if (!autorizadoHttp(req)) {
+      res.status(401).json({ ok: false })
+      return
+    }
+
+    const botId = req.query?.botId ? String(req.query.botId) : 'all'
+    if (botId === 'all') {
+      const out = {}
+      for (const id of gestorBots.listarBots()) {
+        const e = gestorBots.obtenerEntrada(id)
+        out[id] = e?.contexto?.listarComandos?.() ?? []
+      }
+      res.json({ ok: true, commands: out })
+      return
+    }
+
+    const e = gestorBots.obtenerEntrada(botId)
+    if (!e?.contexto) {
+      res.status(404).json({ ok: false, error: 'bot no encontrado' })
+      return
+    }
+    res.json({ ok: true, botId, commands: e.contexto.listarComandos() })
   })
 
   app.get('/config.js', (req, res) => {
@@ -64,12 +89,29 @@ function crearServidorWeb ({ logger, gestorBots, config }) {
     }
   }
 
-  wss.on('connection', (ws, req) => {
-    if (!autorizadoWs(req)) {
-      try { ws.close(1008, 'unauthorized') } catch {}
+  server.on('upgrade', (req, socket, head) => {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`)
+      if (url.pathname !== '/ws') {
+        socket.destroy()
+        return
+      }
+    } catch {
+      socket.destroy()
       return
     }
 
+    if (!autorizadoWs(req)) {
+      socket.destroy()
+      return
+    }
+
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit('connection', ws, req)
+    })
+  })
+
+  wss.on('connection', (ws, req) => {
     const enviarEstado = () => {
       if (ws.readyState !== WebSocket.OPEN) return
       const payload = {
